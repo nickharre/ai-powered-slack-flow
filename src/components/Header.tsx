@@ -1,7 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Zap, Bot, MessageSquare } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
   return (
     <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -31,14 +41,25 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm">
-            <MessageSquare className="w-4 h-4" />
-            Connect Slack
-          </Button>
-          <Button variant="gradient" size="sm">
-            <Zap className="w-4 h-4" />
-            Create App
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" size="sm">
+                <MessageSquare className="w-4 h-4" />
+                Connect Slack
+              </Button>
+              <Button variant="gradient" size="sm">
+                <Zap className="w-4 h-4" />
+                Create App
+              </Button>
+              <Button onClick={handleSignOut} variant="ghost" size="sm">
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button variant="gradient">Sign In</Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>
