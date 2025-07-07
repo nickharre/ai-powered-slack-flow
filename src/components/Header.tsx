@@ -29,9 +29,9 @@ const Header = () => {
         </div>
         
         <nav className="hidden md:flex items-center gap-6">
-          <a href="#apps" className="text-muted-foreground hover:text-foreground transition-colors">
-            My Apps
-          </a>
+          <Link to="/agents" className="text-muted-foreground hover:text-foreground transition-colors">
+            My Agents
+          </Link>
           <a href="#templates" className="text-muted-foreground hover:text-foreground transition-colors">
             Templates
           </a>
@@ -47,10 +47,12 @@ const Header = () => {
                 <MessageSquare className="w-4 h-4" />
                 Connect Slack
               </Button>
-              <Button variant="gradient" size="sm">
-                <Zap className="w-4 h-4" />
-                Create App
-              </Button>
+              <Link to="/agents">
+                <Button variant="gradient" size="sm">
+                  <Zap className="w-4 h-4" />
+                  Create Agent
+                </Button>
+              </Link>
               <Button onClick={handleSignOut} variant="ghost" size="sm">
                 Sign Out
               </Button>

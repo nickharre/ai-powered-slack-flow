@@ -9,7 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          ai_model: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          response_template: string | null
+          slack_channel: string | null
+          slack_workspace: string | null
+          system_prompt: string | null
+          trigger_all_messages: boolean | null
+          trigger_keywords: string[] | null
+          trigger_mentions: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          response_template?: string | null
+          slack_channel?: string | null
+          slack_workspace?: string | null
+          system_prompt?: string | null
+          trigger_all_messages?: boolean | null
+          trigger_keywords?: string[] | null
+          trigger_mentions?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_model?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          response_template?: string | null
+          slack_channel?: string | null
+          slack_workspace?: string | null
+          system_prompt?: string | null
+          trigger_all_messages?: boolean | null
+          trigger_keywords?: string[] | null
+          trigger_mentions?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
