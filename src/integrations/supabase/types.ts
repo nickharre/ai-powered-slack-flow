@@ -17,8 +17,11 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          openai_api_key: string | null
           response_template: string | null
+          slack_bot_token: string | null
           slack_channel: string | null
+          slack_signing_secret: string | null
           slack_workspace: string | null
           system_prompt: string | null
           trigger_all_messages: boolean | null
@@ -34,8 +37,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          openai_api_key?: string | null
           response_template?: string | null
+          slack_bot_token?: string | null
           slack_channel?: string | null
+          slack_signing_secret?: string | null
           slack_workspace?: string | null
           system_prompt?: string | null
           trigger_all_messages?: boolean | null
@@ -51,8 +57,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          openai_api_key?: string | null
           response_template?: string | null
+          slack_bot_token?: string | null
           slack_channel?: string | null
+          slack_signing_secret?: string | null
           slack_workspace?: string | null
           system_prompt?: string | null
           trigger_all_messages?: boolean | null

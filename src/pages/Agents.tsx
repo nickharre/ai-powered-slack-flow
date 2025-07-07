@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AgentForm } from "@/components/AgentForm";
+import { SlackSetupGuide } from "@/components/SlackSetupGuide";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -16,6 +17,9 @@ interface Agent {
   description: string;
   slack_channel: string;
   slack_workspace: string;
+  slack_bot_token: string;
+  slack_signing_secret: string;
+  openai_api_key: string;
   ai_model: string;
   system_prompt: string;
   trigger_keywords: string[];
@@ -149,20 +153,36 @@ const Agents = () => {
               </p>
             </div>
             
-            <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-              <DialogTrigger asChild>
-                <Button variant="gradient" size="lg">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create Agent
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New AI Agent</DialogTitle>
-                </DialogHeader>
-                <AgentForm onSuccess={handleAgentCreated} />
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-3">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="lg">
+                    Setup Guide
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Slack Integration Setup</DialogTitle>
+                  </DialogHeader>
+                  <SlackSetupGuide />
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+                <DialogTrigger asChild>
+                  <Button variant="gradient" size="lg">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create Agent
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New AI Agent</DialogTitle>
+                  </DialogHeader>
+                  <AgentForm onSuccess={handleAgentCreated} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {agents.length === 0 ? (
@@ -215,6 +235,21 @@ const Agents = () => {
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">AI Model</p>
                         <p className="text-sm">{agent.ai_model}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Configuration</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {agent.slack_bot_token && (
+                            <Badge variant="outline" className="text-xs">Slack Connected</Badge>
+                          )}
+                          {agent.openai_api_key && (
+                            <Badge variant="outline" className="text-xs">AI Connected</Badge>
+                          )}
+                          {(!agent.slack_bot_token || !agent.openai_api_key) && (
+                            <Badge variant="destructive" className="text-xs">Config Needed</Badge>
+                          )}
+                        </div>
                       </div>
                       
                       <div>

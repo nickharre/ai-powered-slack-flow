@@ -17,6 +17,9 @@ interface Agent {
   description: string;
   slack_channel: string;
   slack_workspace: string;
+  slack_bot_token: string;
+  slack_signing_secret: string;
+  openai_api_key: string;
   ai_model: string;
   system_prompt: string;
   trigger_keywords: string[];
@@ -37,7 +40,10 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
     description: agent?.description || '',
     slack_channel: agent?.slack_channel || '',
     slack_workspace: agent?.slack_workspace || '',
-    ai_model: agent?.ai_model || 'gpt-4o-mini',
+    slack_bot_token: agent?.slack_bot_token || '',
+    slack_signing_secret: agent?.slack_signing_secret || '',
+    openai_api_key: agent?.openai_api_key || '',
+    ai_model: agent?.ai_model || 'gpt-4.1-2025-04-14',
     system_prompt: agent?.system_prompt || '',
     trigger_keywords: agent?.trigger_keywords || [],
     trigger_mentions: agent?.trigger_mentions || false,
@@ -148,8 +154,10 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Affordable)</SelectItem>
-              <SelectItem value="gpt-4o">GPT-4o (Advanced)</SelectItem>
+              <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Flagship Model)</SelectItem>
+              <SelectItem value="o4-mini-2025-04-16">O4 Mini (Fast Reasoning)</SelectItem>
+              <SelectItem value="o3-2025-04-16">O3 (Powerful Reasoning)</SelectItem>
+              <SelectItem value="gpt-4.1-mini-2025-04-14">GPT-4.1 Mini (Vision)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -165,25 +173,74 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="slack_workspace">Slack Workspace</Label>
-          <Input
-            id="slack_workspace"
-            value={formData.slack_workspace}
-            onChange={(e) => handleInputChange('slack_workspace', e.target.value)}
-            placeholder="e.g., mycompany.slack.com"
-          />
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Slack Configuration</h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="slack_workspace">Slack Workspace</Label>
+            <Input
+              id="slack_workspace"
+              value={formData.slack_workspace}
+              onChange={(e) => handleInputChange('slack_workspace', e.target.value)}
+              placeholder="e.g., mycompany.slack.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="slack_channel">Slack Channel</Label>
+            <Input
+              id="slack_channel"
+              value={formData.slack_channel}
+              onChange={(e) => handleInputChange('slack_channel', e.target.value)}
+              placeholder="e.g., #general or @username"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="slack_channel">Slack Channel</Label>
+          <Label htmlFor="slack_bot_token">Slack Bot Token *</Label>
           <Input
-            id="slack_channel"
-            value={formData.slack_channel}
-            onChange={(e) => handleInputChange('slack_channel', e.target.value)}
-            placeholder="e.g., #general or @username"
+            id="slack_bot_token"
+            type="password"
+            value={formData.slack_bot_token}
+            onChange={(e) => handleInputChange('slack_bot_token', e.target.value)}
+            placeholder="xoxb-..."
+            required
           />
+          <p className="text-xs text-muted-foreground">
+            Get this from your Slack app's "OAuth & Permissions" page
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="slack_signing_secret">Slack Signing Secret *</Label>
+          <Input
+            id="slack_signing_secret"
+            type="password"
+            value={formData.slack_signing_secret}
+            onChange={(e) => handleInputChange('slack_signing_secret', e.target.value)}
+            placeholder="Enter signing secret..."
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Get this from your Slack app's "Basic Information" page
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="openai_api_key">OpenAI API Key *</Label>
+          <Input
+            id="openai_api_key"
+            type="password"
+            value={formData.openai_api_key}
+            onChange={(e) => handleInputChange('openai_api_key', e.target.value)}
+            placeholder="sk-..."
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Get this from platform.openai.com/api-keys
+          </p>
         </div>
       </div>
 
