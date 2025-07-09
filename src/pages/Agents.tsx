@@ -155,10 +155,10 @@ const Agents = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                AI Agents
+                My Agents
               </h1>
               <p className="text-muted-foreground mt-2">
-                Create and manage your intelligent integrated chat agents
+                Create and manage your chat apps
               </p>
             </div>
             

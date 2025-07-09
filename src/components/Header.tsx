@@ -25,7 +25,7 @@ const Header = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">yarn</h1>
-            <p className="text-xs text-muted-foreground">AI-Powered Chat Apps</p>
+            <p className="text-xs text-muted-foreground">Easy as chat apps</p>
           </div>
         </div>
         
