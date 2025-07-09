@@ -85,6 +85,7 @@ serve(async (req) => {
       const teamId = slackEvent.team_id;
       
       // Find active agents that could respond to this message
+      // Note: We're using service role key so we can access all agents
       const { data: agents, error: agentsError } = await supabase
         .from('agents')
         .select('*')
