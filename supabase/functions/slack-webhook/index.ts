@@ -20,6 +20,7 @@ interface Agent {
   trigger_mentions: boolean;
   trigger_all_messages: boolean;
   response_template: string;
+  context_data: string;
   is_active: boolean;
 }
 
@@ -159,6 +160,13 @@ async function checkIfAgentShouldRespond(agent: Agent, event: any): Promise<bool
 }
 
 async function generateAIResponse(agent: Agent, userMessage: string): Promise<string> {
+  // Build system prompt with context data
+  let systemPrompt = agent.system_prompt || 'You are a helpful AI assistant in a Slack workspace. Be concise and friendly.';
+  
+  if (agent.context_data && agent.context_data.trim()) {
+    systemPrompt += `\n\nAdditional Context:\n${agent.context_data}`;
+  }
+  
   const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -170,7 +178,7 @@ async function generateAIResponse(agent: Agent, userMessage: string): Promise<st
       messages: [
         {
           role: 'system',
-          content: agent.system_prompt || 'You are a helpful AI assistant in a Slack workspace. Be concise and friendly.'
+          content: systemPrompt
         },
         {
           role: 'user',

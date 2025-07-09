@@ -22,6 +22,7 @@ interface Agent {
   openai_api_key: string;
   ai_model: string;
   system_prompt: string;
+  context_data: string;
   trigger_keywords: string[];
   trigger_mentions: boolean;
   trigger_all_messages: boolean;
@@ -45,6 +46,7 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
     openai_api_key: agent?.openai_api_key || '',
     ai_model: agent?.ai_model || 'gpt-4o-mini',
     system_prompt: agent?.system_prompt || '',
+    context_data: agent?.context_data || '',
     trigger_keywords: agent?.trigger_keywords || [],
     trigger_mentions: agent?.trigger_mentions || false,
     trigger_all_messages: agent?.trigger_all_messages || false,
@@ -253,6 +255,20 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
           placeholder="Define the agent's personality and behavior..."
           rows={4}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="context_data">Additional Context Data</Label>
+        <Textarea
+          id="context_data"
+          value={formData.context_data}
+          onChange={(e) => handleInputChange('context_data', e.target.value)}
+          placeholder="Provide additional information, documents, or context that the agent should know about..."
+          rows={6}
+        />
+        <p className="text-xs text-muted-foreground">
+          This information will be included in every AI conversation to provide specific context and knowledge
+        </p>
       </div>
 
       <div className="space-y-4">
