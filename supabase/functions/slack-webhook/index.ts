@@ -39,12 +39,15 @@ serve(async (req) => {
 
     // Parse the request body
     const body = await req.text();
+    console.log('Raw request body:', body);
+    
     let slackEvent;
     
     try {
       slackEvent = JSON.parse(body);
     } catch (e) {
       console.error('Failed to parse Slack event:', e);
+      console.error('Raw body was:', body);
       return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
     }
 
@@ -52,6 +55,7 @@ serve(async (req) => {
 
     // Handle Slack URL verification challenge
     if (slackEvent.type === 'url_verification') {
+      console.log('URL verification challenge received:', slackEvent.challenge);
       return new Response(slackEvent.challenge, {
         headers: { ...corsHeaders, 'Content-Type': 'text/plain' }
       });
