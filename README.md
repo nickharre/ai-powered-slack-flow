@@ -1,7 +1,5 @@
 # yarn - AI-Powered Chat Apps Made Easy
 
-![yarn Logo](src/assets/yarn-icon.svg)
-
 yarn is a platform that makes it incredibly easy to create and deploy AI-powered chat applications across multiple platforms like Slack and Microsoft Teams. No complex setup, no server management - just simple configuration and your AI agents are ready to go.
 
 ## 🚀 Features
