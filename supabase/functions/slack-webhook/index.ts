@@ -30,7 +30,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Slack webhook received:', req.method);
+    console.log('Slack webhook received:', req.method, req.url);
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -40,6 +40,12 @@ serve(async (req) => {
     // Parse the request body
     const body = await req.text();
     console.log('Raw request body:', body);
+    
+    // Handle empty body
+    if (!body || body.trim() === '') {
+      console.log('Empty request body received');
+      return new Response('Empty request body', { status: 400, headers: corsHeaders });
+    }
     
     let slackEvent;
     
