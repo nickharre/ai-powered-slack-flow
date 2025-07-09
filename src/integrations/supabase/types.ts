@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           ai_model: string
           context_data: string | null
+          context_file_path: string | null
           created_at: string
           description: string | null
           id: string
@@ -39,6 +40,7 @@ export type Database = {
         Insert: {
           ai_model?: string
           context_data?: string | null
+          context_file_path?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -60,6 +62,7 @@ export type Database = {
         Update: {
           ai_model?: string
           context_data?: string | null
+          context_file_path?: string | null
           created_at?: string
           description?: string | null
           id?: string

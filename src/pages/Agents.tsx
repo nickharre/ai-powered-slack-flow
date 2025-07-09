@@ -23,6 +23,7 @@ interface Agent {
   ai_model: string;
   system_prompt: string;
   context_data: string;
+  context_file_path: string;
   trigger_keywords: string[];
   trigger_mentions: boolean;
   trigger_all_messages: boolean;

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Upload, FileText, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ interface Agent {
   ai_model: string;
   system_prompt: string;
   context_data: string;
+  context_file_path: string;
   trigger_keywords: string[];
   trigger_mentions: boolean;
   trigger_all_messages: boolean;
@@ -47,6 +48,7 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
     ai_model: agent?.ai_model || 'gpt-4o-mini',
     system_prompt: agent?.system_prompt || '',
     context_data: agent?.context_data || '',
+    context_file_path: agent?.context_file_path || '',
     trigger_keywords: agent?.trigger_keywords || [],
     trigger_mentions: agent?.trigger_mentions || false,
     trigger_all_messages: agent?.trigger_all_messages || false,
@@ -56,6 +58,7 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
 
   const [newKeyword, setNewKeyword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -78,6 +81,113 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
       ...prev,
       trigger_keywords: prev.trigger_keywords.filter(k => k !== keyword)
     }));
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Error",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingFile(true);
+
+    try {
+      // Read and parse CSV
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length === 0) {
+        throw new Error('CSV file is empty');
+      }
+
+      // Parse CSV into structured format
+      const headers = lines[0].split(',').map(h => h.trim());
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim());
+        const row: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        return row;
+      });
+
+      // Convert to readable format
+      const contextData = `CSV Data from ${file.name}:\n\nHeaders: ${headers.join(', ')}\n\nData:\n${JSON.stringify(rows, null, 2)}`;
+
+      // Upload file to storage
+      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('agent-context')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Update form data
+      setFormData(prev => ({
+        ...prev,
+        context_data: prev.context_data ? `${prev.context_data}\n\n${contextData}` : contextData,
+        context_file_path: fileName
+      }));
+
+      toast({
+        title: "Success",
+        description: "CSV file uploaded and parsed successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload and parse CSV file",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFile(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  const removeUploadedFile = async () => {
+    if (!formData.context_file_path) return;
+
+    try {
+      // Remove file from storage
+      const { error } = await supabase.storage
+        .from('agent-context')
+        .remove([formData.context_file_path]);
+
+      if (error) throw error;
+
+      // Clear file data from context
+      const fileName = formData.context_file_path.split('/').pop();
+      const csvPattern = new RegExp(`CSV Data from ${fileName}:.*?(?=\\n\\nCSV Data from|$)`, 's');
+      const updatedContextData = formData.context_data.replace(csvPattern, '').trim();
+
+      setFormData(prev => ({
+        ...prev,
+        context_data: updatedContextData,
+        context_file_path: ''
+      }));
+
+      toast({
+        title: "Success",
+        description: "File removed successfully",
+      });
+    } catch (error) {
+      console.error('Error removing file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove file",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -269,6 +379,61 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
         <p className="text-xs text-muted-foreground">
           This information will be included in every AI conversation to provide specific context and knowledge
         </p>
+        
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Upload CSV File</Label>
+            {formData.context_file_path && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={removeUploadedFile}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Remove File
+              </Button>
+            )}
+          </div>
+          
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              disabled={uploadingFile}
+              className="hidden"
+              id="csv-upload"
+            />
+            <label
+              htmlFor="csv-upload"
+              className="flex flex-col items-center justify-center cursor-pointer"
+            >
+              {uploadingFile ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <span>Uploading and parsing CSV...</span>
+                </div>
+              ) : formData.context_file_path ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <FileText className="w-5 h-5" />
+                  <span>CSV file uploaded: {formData.context_file_path.split('/').pop()}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Upload className="w-8 h-8" />
+                  <span className="text-sm font-medium">Upload CSV file</span>
+                  <span className="text-xs">Click to browse or drag and drop</span>
+                </div>
+              )}
+            </label>
+          </div>
+          
+          <p className="text-xs text-muted-foreground">
+            Upload a CSV file to automatically parse and include structured data as context. The data will be formatted and added to the context above.
+          </p>
+        </div>
       </div>
 
       <div className="space-y-4">
