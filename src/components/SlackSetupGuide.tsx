@@ -10,7 +10,7 @@ export const SlackSetupGuide = () => {
   const [copiedStep, setCopiedStep] = useState<string | null>(null);
   const { toast } = useToast();
   
-  const webhookUrl = `https://ayiluypvbpxhbuwthokx.supabase.co/functions/v1/slack-webhook`;
+  const webhookUrl = `https://ayiluypvbpxhbuwthokx.supabase.co/functions/v1/unified-webhook`;
 
   const copyToClipboard = (text: string, step: string) => {
     navigator.clipboard.writeText(text);

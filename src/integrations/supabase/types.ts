@@ -25,12 +25,17 @@ export type Database = {
           is_active: boolean | null
           name: string
           openai_api_key: string | null
+          platform: string[] | null
           response_template: string | null
           slack_bot_token: string | null
           slack_channel: string | null
           slack_signing_secret: string | null
           slack_workspace: string | null
           system_prompt: string | null
+          teams_app_id: string | null
+          teams_app_password: string | null
+          teams_service_url: string | null
+          teams_tenant_id: string | null
           trigger_all_messages: boolean | null
           trigger_keywords: string[] | null
           trigger_mentions: boolean | null
@@ -47,12 +52,17 @@ export type Database = {
           is_active?: boolean | null
           name: string
           openai_api_key?: string | null
+          platform?: string[] | null
           response_template?: string | null
           slack_bot_token?: string | null
           slack_channel?: string | null
           slack_signing_secret?: string | null
           slack_workspace?: string | null
           system_prompt?: string | null
+          teams_app_id?: string | null
+          teams_app_password?: string | null
+          teams_service_url?: string | null
+          teams_tenant_id?: string | null
           trigger_all_messages?: boolean | null
           trigger_keywords?: string[] | null
           trigger_mentions?: boolean | null
@@ -69,12 +79,17 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           openai_api_key?: string | null
+          platform?: string[] | null
           response_template?: string | null
           slack_bot_token?: string | null
           slack_channel?: string | null
           slack_signing_secret?: string | null
           slack_workspace?: string | null
           system_prompt?: string | null
+          teams_app_id?: string | null
+          teams_app_password?: string | null
+          teams_service_url?: string | null
+          teams_tenant_id?: string | null
           trigger_all_messages?: boolean | null
           trigger_keywords?: string[] | null
           trigger_mentions?: boolean | null

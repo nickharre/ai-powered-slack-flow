@@ -8,17 +8,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AgentForm } from "@/components/AgentForm";
 import { SlackSetupGuide } from "@/components/SlackSetupGuide";
+import { TeamsSetupGuide } from "@/components/TeamsSetupGuide";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface Agent {
   id: string;
   name: string;
   description: string;
+  platform: string[];
   slack_channel: string;
   slack_workspace: string;
   slack_bot_token: string;
   slack_signing_secret: string;
+  teams_app_id: string;
+  teams_app_password: string;
+  teams_tenant_id: string;
+  teams_service_url: string;
   openai_api_key: string;
   ai_model: string;
   system_prompt: string;
@@ -164,9 +171,20 @@ const Agents = () => {
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Slack Integration Setup</DialogTitle>
+                    <DialogTitle>Platform Integration Setup</DialogTitle>
                   </DialogHeader>
-                  <SlackSetupGuide />
+                  <Tabs defaultValue="slack" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="slack">Slack</TabsTrigger>
+                      <TabsTrigger value="teams">Microsoft Teams</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="slack">
+                      <SlackSetupGuide />
+                    </TabsContent>
+                    <TabsContent value="teams">
+                      <TeamsSetupGuide />
+                    </TabsContent>
+                  </Tabs>
                 </DialogContent>
               </Dialog>
               
@@ -240,15 +258,31 @@ const Agents = () => {
                       </div>
 
                       <div>
+                        <p className="text-sm font-medium text-muted-foreground">Platforms</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {agent.platform?.map((platform) => (
+                            <Badge key={platform} variant="outline" className="text-xs capitalize">
+                              {platform === 'teams' ? 'MS Teams' : platform}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
                         <p className="text-sm font-medium text-muted-foreground">Configuration</p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {agent.slack_bot_token && (
+                          {agent.platform?.includes('slack') && agent.slack_bot_token && (
                             <Badge variant="outline" className="text-xs">Slack Connected</Badge>
+                          )}
+                          {agent.platform?.includes('teams') && agent.teams_app_id && (
+                            <Badge variant="outline" className="text-xs">Teams Connected</Badge>
                           )}
                           {agent.openai_api_key && (
                             <Badge variant="outline" className="text-xs">AI Connected</Badge>
                           )}
-                          {(!agent.slack_bot_token || !agent.openai_api_key) && (
+                          {(!agent.openai_api_key || 
+                            (agent.platform?.includes('slack') && !agent.slack_bot_token) ||
+                            (agent.platform?.includes('teams') && !agent.teams_app_id)) && (
                             <Badge variant="destructive" className="text-xs">Config Needed</Badge>
                           )}
                         </div>

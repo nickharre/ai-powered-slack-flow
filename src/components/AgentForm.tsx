@@ -15,10 +15,15 @@ interface Agent {
   id: string;
   name: string;
   description: string;
+  platform: string[];
   slack_channel: string;
   slack_workspace: string;
   slack_bot_token: string;
   slack_signing_secret: string;
+  teams_app_id: string;
+  teams_app_password: string;
+  teams_tenant_id: string;
+  teams_service_url: string;
   openai_api_key: string;
   ai_model: string;
   system_prompt: string;
@@ -40,10 +45,15 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
   const [formData, setFormData] = useState({
     name: agent?.name || '',
     description: agent?.description || '',
+    platform: agent?.platform || ['slack'],
     slack_channel: agent?.slack_channel || '',
     slack_workspace: agent?.slack_workspace || '',
     slack_bot_token: agent?.slack_bot_token || '',
     slack_signing_secret: agent?.slack_signing_secret || '',
+    teams_app_id: agent?.teams_app_id || '',
+    teams_app_password: agent?.teams_app_password || '',
+    teams_tenant_id: agent?.teams_tenant_id || '',
+    teams_service_url: agent?.teams_service_url || '',
     openai_api_key: agent?.openai_api_key || '',
     ai_model: agent?.ai_model || 'gpt-4o-mini',
     system_prompt: agent?.system_prompt || '',
@@ -286,74 +296,169 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">Slack Configuration</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="slack_workspace">Slack Workspace</Label>
-            <Input
-              id="slack_workspace"
-              value={formData.slack_workspace}
-              onChange={(e) => handleInputChange('slack_workspace', e.target.value)}
-              placeholder="e.g., mycompany.slack.com"
-            />
+        <h3 className="text-lg font-semibold text-foreground">Platform Selection</h3>
+        <div className="space-y-3">
+          <Label>Deploy to Platforms</Label>
+          <div className="flex gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="platform_slack"
+                checked={formData.platform.includes('slack')}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    handleInputChange('platform', [...formData.platform, 'slack']);
+                  } else {
+                    handleInputChange('platform', formData.platform.filter(p => p !== 'slack'));
+                  }
+                }}
+              />
+              <Label htmlFor="platform_slack">Slack</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="platform_teams"
+                checked={formData.platform.includes('teams')}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    handleInputChange('platform', [...formData.platform, 'teams']);
+                  } else {
+                    handleInputChange('platform', formData.platform.filter(p => p !== 'teams'));
+                  }
+                }}
+              />
+              <Label htmlFor="platform_teams">Microsoft Teams</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {formData.platform.includes('slack') && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Slack Configuration</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="slack_workspace">Slack Workspace</Label>
+              <Input
+                id="slack_workspace"
+                value={formData.slack_workspace}
+                onChange={(e) => handleInputChange('slack_workspace', e.target.value)}
+                placeholder="e.g., mycompany.slack.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="slack_channel">Slack Channel</Label>
+              <Input
+                id="slack_channel"
+                value={formData.slack_channel}
+                onChange={(e) => handleInputChange('slack_channel', e.target.value)}
+                placeholder="e.g., #general or @username"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slack_channel">Slack Channel</Label>
+            <Label htmlFor="slack_bot_token">Slack Bot Token *</Label>
             <Input
-              id="slack_channel"
-              value={formData.slack_channel}
-              onChange={(e) => handleInputChange('slack_channel', e.target.value)}
-              placeholder="e.g., #general or @username"
+              id="slack_bot_token"
+              type="password"
+              value={formData.slack_bot_token}
+              onChange={(e) => handleInputChange('slack_bot_token', e.target.value)}
+              placeholder="xoxb-..."
             />
+            <p className="text-xs text-muted-foreground">
+              Get this from your Slack app's "OAuth & Permissions" page
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="slack_signing_secret">Slack Signing Secret *</Label>
+            <Input
+              id="slack_signing_secret"
+              type="password"
+              value={formData.slack_signing_secret}
+              onChange={(e) => handleInputChange('slack_signing_secret', e.target.value)}
+              placeholder="Enter signing secret..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Get this from your Slack app's "Basic Information" page
+            </p>
           </div>
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label htmlFor="slack_bot_token">Slack Bot Token *</Label>
-          <Input
-            id="slack_bot_token"
-            type="password"
-            value={formData.slack_bot_token}
-            onChange={(e) => handleInputChange('slack_bot_token', e.target.value)}
-            placeholder="xoxb-..."
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Get this from your Slack app's "OAuth & Permissions" page
-          </p>
-        </div>
+      {formData.platform.includes('teams') && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Microsoft Teams Configuration</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="teams_app_id">Teams App ID *</Label>
+              <Input
+                id="teams_app_id"
+                value={formData.teams_app_id}
+                onChange={(e) => handleInputChange('teams_app_id', e.target.value)}
+                placeholder="Enter your Teams App ID"
+              />
+              <p className="text-xs text-muted-foreground">
+                Get this from Azure Bot Service registration
+              </p>
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="slack_signing_secret">Slack Signing Secret *</Label>
-          <Input
-            id="slack_signing_secret"
-            type="password"
-            value={formData.slack_signing_secret}
-            onChange={(e) => handleInputChange('slack_signing_secret', e.target.value)}
-            placeholder="Enter signing secret..."
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Get this from your Slack app's "Basic Information" page
-          </p>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="teams_tenant_id">Tenant ID</Label>
+              <Input
+                id="teams_tenant_id"
+                value={formData.teams_tenant_id}
+                onChange={(e) => handleInputChange('teams_tenant_id', e.target.value)}
+                placeholder="Enter your Azure tenant ID"
+              />
+            </div>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="openai_api_key">OpenAI API Key *</Label>
-          <Input
-            id="openai_api_key"
-            type="password"
-            value={formData.openai_api_key}
-            onChange={(e) => handleInputChange('openai_api_key', e.target.value)}
-            placeholder="sk-..."
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Get this from platform.openai.com/api-keys
-          </p>
+          <div className="space-y-2">
+            <Label htmlFor="teams_app_password">Teams App Password *</Label>
+            <Input
+              id="teams_app_password"
+              type="password"
+              value={formData.teams_app_password}
+              onChange={(e) => handleInputChange('teams_app_password', e.target.value)}
+              placeholder="Enter your Teams app password/secret"
+            />
+            <p className="text-xs text-muted-foreground">
+              Get this from Azure Bot Service certificates & secrets
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="teams_service_url">Service URL</Label>
+            <Input
+              id="teams_service_url"
+              value={formData.teams_service_url}
+              onChange={(e) => handleInputChange('teams_service_url', e.target.value)}
+              placeholder="https://smba.trafficmanager.net/teams/"
+            />
+            <p className="text-xs text-muted-foreground">
+              Usually https://smba.trafficmanager.net/teams/ for production
+            </p>
+          </div>
         </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="openai_api_key">OpenAI API Key *</Label>
+        <Input
+          id="openai_api_key"
+          type="password"
+          value={formData.openai_api_key}
+          onChange={(e) => handleInputChange('openai_api_key', e.target.value)}
+          placeholder="sk-..."
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          Get this from platform.openai.com/api-keys
+        </p>
       </div>
 
       <div className="space-y-2">
