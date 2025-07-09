@@ -200,28 +200,43 @@ async function generateAIResponse(agent: Agent, userMessage: string): Promise<st
 }
 
 async function sendSlackMessage(agent: Agent, channel: string, message: string): Promise<void> {
+  console.log(`Attempting to send message to channel: ${channel}`);
+  console.log(`Message length: ${message.length}`);
+  console.log(`Bot token starts with: ${agent.slack_bot_token?.substring(0, 10)}...`);
+  
+  const payload = {
+    channel: channel,
+    text: message,
+    as_user: false,
+  };
+  
+  console.log('Slack API payload:', JSON.stringify(payload, null, 2));
+  
   const slackResponse = await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${agent.slack_bot_token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      channel: channel,
-      text: message,
-      as_user: false,
-    }),
+    body: JSON.stringify(payload),
   });
 
+  console.log(`Slack API response status: ${slackResponse.status}`);
+  
   if (!slackResponse.ok) {
     const errorText = await slackResponse.text();
-    console.error('Slack API error:', errorText);
-    throw new Error(`Slack API error: ${slackResponse.status}`);
+    console.error('Slack HTTP error:', errorText);
+    throw new Error(`Slack HTTP error: ${slackResponse.status} - ${errorText}`);
   }
 
   const slackData = await slackResponse.json();
+  console.log('Slack API response:', JSON.stringify(slackData, null, 2));
+  
   if (!slackData.ok) {
     console.error('Slack API response error:', slackData.error);
+    console.error('Full Slack response:', slackData);
     throw new Error(`Slack API response error: ${slackData.error}`);
   }
+  
+  console.log('Message sent successfully to Slack');
 }
