@@ -207,7 +207,6 @@ async function sendSlackMessage(agent: Agent, channel: string, message: string):
   const payload = {
     channel: channel,
     text: message,
-    as_user: false,
   };
   
   console.log('Slack API payload:', JSON.stringify(payload, null, 2));
@@ -216,7 +215,7 @@ async function sendSlackMessage(agent: Agent, channel: string, message: string):
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${agent.slack_bot_token}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify(payload),
   });
