@@ -23,8 +23,8 @@ const Header = () => {
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full animate-pulse-slow"></div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">SlackAI Builder</h1>
-            <p className="text-xs text-muted-foreground">AI-Powered Slack Apps</p>
+            <h1 className="text-xl font-bold text-foreground">yarn</h1>
+            <p className="text-xs text-muted-foreground">AI-Powered Chat Apps</p>
           </div>
         </div>
         

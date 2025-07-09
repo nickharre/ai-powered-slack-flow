@@ -89,10 +89,10 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            SlackAI Builder
+            yarn
           </h1>
           <p className="text-muted-foreground mt-2">
-            Build intelligent Slack bots with AI
+            Build intelligent chat bots with AI
           </p>
         </div>
 
