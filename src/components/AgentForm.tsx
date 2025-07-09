@@ -43,7 +43,7 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
     slack_bot_token: agent?.slack_bot_token || '',
     slack_signing_secret: agent?.slack_signing_secret || '',
     openai_api_key: agent?.openai_api_key || '',
-    ai_model: agent?.ai_model || 'gpt-4.1-2025-04-14',
+    ai_model: agent?.ai_model || 'gpt-4o-mini',
     system_prompt: agent?.system_prompt || '',
     trigger_keywords: agent?.trigger_keywords || [],
     trigger_mentions: agent?.trigger_mentions || false,
@@ -154,10 +154,10 @@ export const AgentForm = ({ agent, onSuccess }: AgentFormProps) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Flagship Model)</SelectItem>
-              <SelectItem value="o4-mini-2025-04-16">O4 Mini (Fast Reasoning)</SelectItem>
-              <SelectItem value="o3-2025-04-16">O3 (Powerful Reasoning)</SelectItem>
-              <SelectItem value="gpt-4.1-mini-2025-04-14">GPT-4.1 Mini (Vision)</SelectItem>
+              <SelectItem value="gpt-4o">GPT-4o (Latest)</SelectItem>
+              <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Affordable)</SelectItem>
+              <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+              <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
             </SelectContent>
           </Select>
         </div>
