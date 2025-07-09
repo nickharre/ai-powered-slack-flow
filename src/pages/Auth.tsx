@@ -92,7 +92,7 @@ const Auth = () => {
             yarn
           </h1>
           <p className="text-muted-foreground mt-2">
-            Build intelligent chat bots with AI
+            Build intelligent integrated chat agents with AI
           </p>
         </div>
 

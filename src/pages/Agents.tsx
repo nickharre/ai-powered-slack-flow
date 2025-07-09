@@ -158,7 +158,7 @@ const Agents = () => {
                 AI Agents
               </h1>
               <p className="text-muted-foreground mt-2">
-                Create and manage your intelligent Slack bots
+                Create and manage your intelligent integrated chat agents
               </p>
             </div>
             

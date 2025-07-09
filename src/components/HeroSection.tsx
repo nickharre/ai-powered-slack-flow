@@ -38,12 +38,12 @@ const HeroSection = () => {
               AI-Powered
             </span>
             <br />
-            Slack Apps
+            Chat Apps
           </h1>
 
           {/* Subheading */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-            Create intelligent Slack bots that listen, learn, and respond using AI. 
+            Create intelligent integrated chat agents that listen, learn, and respond using AI. 
             No coding required - just connect your data and deploy.
           </p>
 
