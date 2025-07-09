@@ -32,12 +32,6 @@ const Header = () => {
           <Link to="/agents" className="text-muted-foreground hover:text-foreground transition-colors">
             My Agents
           </Link>
-          <a href="#templates" className="text-muted-foreground hover:text-foreground transition-colors">
-            Templates
-          </a>
-          <a href="#docs" className="text-muted-foreground hover:text-foreground transition-colors">
-            Docs
-          </a>
         </nav>
 
         <div className="flex items-center gap-3">
