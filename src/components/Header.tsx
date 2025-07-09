@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Zap, Bot, MessageSquare } from "lucide-react";
+import { Zap, Bot } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -37,10 +37,6 @@ const Header = () => {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Button variant="outline" size="sm">
-                <MessageSquare className="w-4 h-4" />
-                Connect Slack
-              </Button>
               <Link to="/agents">
                 <Button variant="gradient" size="sm">
                   <Zap className="w-4 h-4" />
