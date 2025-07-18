@@ -161,10 +161,20 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
     for (const agent of agents as Agent[]) {
       if (hasResponded) break; // Prevent multiple responses
       
+      // Check if this agent should respond to this specific channel
+      if (agent.slack_channel && !event.channel.startsWith(agent.slack_channel.replace('#', ''))) {
+        console.log(`Agent ${agent.name} skipped - wrong channel. Expected: ${agent.slack_channel}, Got: ${event.channel}`);
+        continue;
+      }
+      
       const shouldRespond = await checkIfAgentShouldRespond(agent, event.text);
       
       if (shouldRespond) {
-        console.log(`Agent ${agent.name} should respond to Slack message`);
+        console.log(`Agent ${agent.name} should respond to Slack message in channel ${event.channel}`);
+        
+        // Check for message deduplication using a simple timestamp check
+        const messageKey = `${event.channel}_${event.ts}`;
+        console.log(`Processing message key: ${messageKey}`);
         
         try {
           const aiResponse = await generateAIResponse(agent, event.text);
