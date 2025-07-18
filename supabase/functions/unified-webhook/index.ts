@@ -133,8 +133,11 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
       return new Response('OK', { headers: corsHeaders });
     }
 
-    // Process each agent that might respond
+    // Process agents - only allow one agent to respond per message
+    let hasResponded = false;
     for (const agent of agents as Agent[]) {
+      if (hasResponded) break; // Prevent multiple responses
+      
       const shouldRespond = await checkIfAgentShouldRespond(agent, event.text);
       
       if (shouldRespond) {
@@ -144,6 +147,7 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
           const aiResponse = await generateAIResponse(agent, event.text);
           await sendSlackMessage(agent, event.channel, aiResponse);
           console.log(`Agent ${agent.name} responded successfully to Slack`);
+          hasResponded = true; // Mark that we've responded
         } catch (error) {
           console.error(`Error processing Slack agent ${agent.name}:`, error);
         }
@@ -180,8 +184,11 @@ async function handleTeamsEvent(teamsEvent: any, supabase: any) {
       return new Response('OK', { headers: corsHeaders });
     }
 
-    // Process each agent that might respond
+    // Process agents - only allow one agent to respond per message
+    let hasResponded = false;
     for (const agent of agents as Agent[]) {
+      if (hasResponded) break; // Prevent multiple responses
+      
       const shouldRespond = await checkIfAgentShouldRespond(agent, teamsEvent.text);
       
       if (shouldRespond) {
@@ -191,6 +198,7 @@ async function handleTeamsEvent(teamsEvent: any, supabase: any) {
           const aiResponse = await generateAIResponse(agent, teamsEvent.text);
           await sendTeamsMessage(agent, teamsEvent, aiResponse);
           console.log(`Agent ${agent.name} responded successfully to Teams`);
+          hasResponded = true; // Mark that we've responded
         } catch (error) {
           console.error(`Error processing Teams agent ${agent.name}:`, error);
         }
