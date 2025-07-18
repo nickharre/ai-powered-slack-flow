@@ -107,13 +107,36 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
     const event = slackEvent.event;
     
     // Skip bot messages to avoid loops
-    if (event.bot_id || event.user === 'USLACKBOT') {
+    if (event.bot_id || event.user === 'USLACKBOT' || event.subtype === 'bot_message') {
+      console.log('Skipping bot message to avoid loops');
       return new Response('OK', { headers: corsHeaders });
     }
 
     // Only handle message events
     if (event.type !== 'message' || !event.text) {
       return new Response('OK', { headers: corsHeaders });
+    }
+
+    // Get all active Slack agents first to check if message is from our own bot
+    const { data: allAgents, error: allAgentsError } = await supabase
+      .from('agents')
+      .select('slack_bot_token')
+      .contains('platform', ['slack'])
+      .eq('is_active', true);
+
+    if (allAgentsError) {
+      console.error('Error fetching agents for bot check:', allAgentsError);
+      return new Response('Error checking agents', { status: 500, headers: corsHeaders });
+    }
+
+    // Check if this message might be from one of our own bots
+    // This is a more robust check than just checking bot_id
+    if (allAgents && allAgents.length > 0) {
+      // If the event has a bot_id, we should skip it regardless
+      if (event.bot_id) {
+        console.log('Skipping message with bot_id to avoid loops');
+        return new Response('OK', { headers: corsHeaders });
+      }
     }
 
     // Find active Slack agents
@@ -161,9 +184,32 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
 async function handleTeamsEvent(teamsEvent: any, supabase: any) {
   console.log('Processing Teams event:', teamsEvent);
 
-  // Skip messages from the bot itself
-  if (teamsEvent.from?.id?.includes('bot')) {
+  // Skip messages from bots to avoid loops
+  if (teamsEvent.from?.id?.includes('bot') || teamsEvent.from?.name?.includes('bot')) {
+    console.log('Skipping bot message to avoid loops');
     return new Response('OK', { headers: corsHeaders });
+  }
+
+  // Get all active Teams agents to check if message is from our own bot
+  const { data: allAgents, error: allAgentsError } = await supabase
+    .from('agents')
+    .select('teams_app_id, name')
+    .contains('platform', ['teams'])
+    .eq('is_active', true);
+
+  if (allAgentsError) {
+    console.error('Error fetching agents for bot check:', allAgentsError);
+    return new Response('Error checking agents', { status: 500, headers: corsHeaders });
+  }
+
+  // Check if this message is from one of our own Teams bots
+  if (allAgents && allAgents.length > 0) {
+    for (const agent of allAgents) {
+      if (teamsEvent.from?.id === agent.teams_app_id || teamsEvent.from?.name === agent.name) {
+        console.log(`Skipping message from own bot: ${agent.name}`);
+        return new Response('OK', { headers: corsHeaders });
+      }
+    }
   }
 
   if (teamsEvent.type === 'message' && teamsEvent.text) {
