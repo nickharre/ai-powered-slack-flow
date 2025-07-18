@@ -30,14 +30,16 @@ interface Agent {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID().substring(0, 8);
+  console.log(`[${requestId}] Unified webhook received:`, req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`[${requestId}] CORS preflight request`);
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Unified webhook received:', req.method, req.url);
-    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -45,11 +47,11 @@ serve(async (req) => {
 
     // Parse the request body
     const body = await req.text();
-    console.log('Raw request body:', body);
+    console.log(`[${requestId}] Raw request body length:`, body.length);
     
     // Handle empty body
     if (!body || body.trim() === '') {
-      console.log('Empty request body received');
+      console.log(`[${requestId}] Empty request body received`);
       return new Response('Empty request body', { status: 400, headers: corsHeaders });
     }
     
@@ -57,13 +59,12 @@ serve(async (req) => {
     
     try {
       eventData = JSON.parse(body);
+      console.log(`[${requestId}] Parsed event data type:`, eventData.type);
     } catch (e) {
-      console.error('Failed to parse event data:', e);
-      console.error('Raw body was:', body);
+      console.error(`[${requestId}] Failed to parse event data:`, e);
+      console.error(`[${requestId}] Raw body was:`, body);
       return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
     }
-
-    console.log('Event data received:', eventData);
 
     // Determine platform based on event structure
     let platform = 'unknown';
@@ -73,19 +74,19 @@ serve(async (req) => {
       platform = 'teams';
     }
 
-    console.log('Detected platform:', platform);
+    console.log(`[${requestId}] Detected platform:`, platform);
 
     if (platform === 'slack') {
-      return await handleSlackEvent(eventData, supabase);
+      return await handleSlackEvent(eventData, supabase, requestId);
     } else if (platform === 'teams') {
-      return await handleTeamsEvent(eventData, supabase);
+      return await handleTeamsEvent(eventData, supabase, requestId);
     } else {
-      console.log('Unknown platform or event type');
+      console.log(`[${requestId}] Unknown platform or event type`);
       return new Response('Unknown platform', { status: 400, headers: corsHeaders });
     }
 
   } catch (error) {
-    console.error('Error in unified webhook function:', error);
+    console.error(`[${requestId}] Error in unified webhook function:`, error);
     return new Response('Internal Server Error', { 
       status: 500, 
       headers: corsHeaders 
@@ -93,10 +94,12 @@ serve(async (req) => {
   }
 });
 
-async function handleSlackEvent(slackEvent: any, supabase: any) {
+async function handleSlackEvent(slackEvent: any, supabase: any, requestId: string) {
+  console.log(`[${requestId}] Processing Slack event type:`, slackEvent.type);
+  
   // Handle Slack URL verification challenge
   if (slackEvent.type === 'url_verification') {
-    console.log('Slack URL verification challenge received:', slackEvent.challenge);
+    console.log(`[${requestId}] Slack URL verification challenge:`, slackEvent.challenge);
     return new Response(slackEvent.challenge, {
       headers: { ...corsHeaders, 'Content-Type': 'text/plain' }
     });
@@ -105,18 +108,22 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
   // Handle Slack events
   if (slackEvent.type === 'event_callback' && slackEvent.event) {
     const event = slackEvent.event;
+    console.log(`[${requestId}] Event details - type: ${event.type}, channel: ${event.channel}, user: ${event.user}, bot_id: ${event.bot_id}, subtype: ${event.subtype}`);
     
     // Skip bot messages to avoid loops
     if (event.bot_id || event.user === 'USLACKBOT' || event.subtype === 'bot_message') {
-      console.log('Skipping bot message to avoid loops');
+      console.log(`[${requestId}] Skipping bot message to avoid loops`);
       return new Response('OK', { headers: corsHeaders });
     }
 
     // Only handle message events
     if (event.type !== 'message' || !event.text) {
+      console.log(`[${requestId}] Skipping non-message event or empty text`);
       return new Response('OK', { headers: corsHeaders });
     }
 
+    console.log(`[${requestId}] Message text: "${event.text}"`);
+    
     // Get all active Slack agents first to check if message is from our own bot
     const { data: allAgents, error: allAgentsError } = await supabase
       .from('agents')
@@ -158,6 +165,7 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
 
     // Check for message deduplication first
     const messageId = event.ts || `${event.channel}_${Date.now()}`;
+    console.log(`[${requestId}] Attempting to process message ID: ${messageId}`);
     
     // Try to insert message ID to prevent duplicates
     const { error: duplicateError } = await supabase
@@ -168,34 +176,47 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
         platform: 'slack'
       });
     
-    if (duplicateError && duplicateError.code === '23505') { // Unique constraint violation
-      console.log(`Message ${messageId} already processed, skipping`);
-      return new Response('OK', { headers: corsHeaders });
+    if (duplicateError) {
+      if (duplicateError.code === '23505') { // Unique constraint violation
+        console.log(`[${requestId}] Message ${messageId} already processed, skipping`);
+        return new Response('OK', { headers: corsHeaders });
+      } else {
+        console.error(`[${requestId}] Error inserting processed message:`, duplicateError);
+      }
+    } else {
+      console.log(`[${requestId}] Successfully logged message ${messageId} as processed`);
     }
 
     // Process agents - only allow one agent to respond per message
+    console.log(`[${requestId}] Found ${agents.length} active Slack agents`);
     let hasResponded = false;
     for (const agent of agents as Agent[]) {
-      if (hasResponded) break; // Prevent multiple responses
+      console.log(`[${requestId}] Checking agent: ${agent.name}, channel config: ${agent.slack_channel}, hasResponded: ${hasResponded}`);
+      
+      if (hasResponded) {
+        console.log(`[${requestId}] Breaking loop - already responded`);
+        break; // Prevent multiple responses
+      }
       
       // Check if this agent should respond to this specific channel
       if (agent.slack_channel && !event.channel.startsWith(agent.slack_channel.replace('#', ''))) {
-        console.log(`Agent ${agent.name} skipped - wrong channel. Expected: ${agent.slack_channel}, Got: ${event.channel}`);
+        console.log(`[${requestId}] Agent ${agent.name} skipped - wrong channel. Expected: ${agent.slack_channel}, Got: ${event.channel}`);
         continue;
       }
       
       const shouldRespond = await checkIfAgentShouldRespond(agent, event.text);
+      console.log(`[${requestId}] Agent ${agent.name} shouldRespond: ${shouldRespond}`);
       
       if (shouldRespond) {
-        console.log(`Agent ${agent.name} should respond to Slack message in channel ${event.channel}`);
+        console.log(`[${requestId}] Agent ${agent.name} should respond to Slack message in channel ${event.channel}`);
         
         try {
           const aiResponse = await generateAIResponse(agent, event.text);
           await sendSlackMessage(agent, event.channel, aiResponse);
-          console.log(`Agent ${agent.name} responded successfully to Slack`);
+          console.log(`[${requestId}] Agent ${agent.name} responded successfully to Slack`);
           hasResponded = true; // Mark that we've responded
         } catch (error) {
-          console.error(`Error processing Slack agent ${agent.name}:`, error);
+          console.error(`[${requestId}] Error processing Slack agent ${agent.name}:`, error);
         }
       }
     }
@@ -204,7 +225,7 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
   return new Response('OK', { headers: corsHeaders });
 }
 
-async function handleTeamsEvent(teamsEvent: any, supabase: any) {
+async function handleTeamsEvent(teamsEvent: any, supabase: any, requestId: string) {
   console.log('Processing Teams event:', teamsEvent);
 
   // Skip messages from bots to avoid loops
