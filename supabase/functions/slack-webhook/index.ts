@@ -102,8 +102,35 @@ serve(async (req) => {
         return new Response('OK', { headers: corsHeaders });
       }
 
-      // Process each agent that might respond
+      // Check for message deduplication first
+      const messageId = event.ts || `${event.channel}_${Date.now()}`;
+      console.log(`Attempting to process message ID: ${messageId}`);
+      
+      // Try to insert message ID to prevent duplicates
+      const { error: duplicateError } = await supabase
+        .from('processed_messages')
+        .insert({
+          message_id: messageId,
+          channel_id: event.channel,
+          platform: 'slack'
+        });
+      
+      if (duplicateError) {
+        if (duplicateError.code === '23505') { // Unique constraint violation
+          console.log(`Message ${messageId} already processed, skipping`);
+          return new Response('OK', { headers: corsHeaders });
+        } else {
+          console.error(`Error inserting processed message:`, duplicateError);
+        }
+      } else {
+        console.log(`Successfully logged message ${messageId} as processed`);
+      }
+
+      // Process agents - only allow one agent to respond per message
+      let hasResponded = false;
       for (const agent of agents as Agent[]) {
+        if (hasResponded) break; // Prevent multiple responses
+        
         const shouldRespond = await checkIfAgentShouldRespond(agent, event);
         
         if (shouldRespond) {
@@ -117,6 +144,7 @@ serve(async (req) => {
             await sendSlackMessage(agent, event.channel, aiResponse);
             
             console.log(`Agent ${agent.name} responded successfully`);
+            hasResponded = true; // Mark that we've responded
           } catch (error) {
             console.error(`Error processing agent ${agent.name}:`, error);
           }
