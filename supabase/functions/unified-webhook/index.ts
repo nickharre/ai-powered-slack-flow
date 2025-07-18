@@ -156,6 +156,23 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
       return new Response('OK', { headers: corsHeaders });
     }
 
+    // Check for message deduplication first
+    const messageId = event.ts || `${event.channel}_${Date.now()}`;
+    
+    // Try to insert message ID to prevent duplicates
+    const { error: duplicateError } = await supabase
+      .from('processed_messages')
+      .insert({
+        message_id: messageId,
+        channel_id: event.channel,
+        platform: 'slack'
+      });
+    
+    if (duplicateError && duplicateError.code === '23505') { // Unique constraint violation
+      console.log(`Message ${messageId} already processed, skipping`);
+      return new Response('OK', { headers: corsHeaders });
+    }
+
     // Process agents - only allow one agent to respond per message
     let hasResponded = false;
     for (const agent of agents as Agent[]) {
@@ -171,10 +188,6 @@ async function handleSlackEvent(slackEvent: any, supabase: any) {
       
       if (shouldRespond) {
         console.log(`Agent ${agent.name} should respond to Slack message in channel ${event.channel}`);
-        
-        // Check for message deduplication using a simple timestamp check
-        const messageKey = `${event.channel}_${event.ts}`;
-        console.log(`Processing message key: ${messageKey}`);
         
         try {
           const aiResponse = await generateAIResponse(agent, event.text);
@@ -223,6 +236,23 @@ async function handleTeamsEvent(teamsEvent: any, supabase: any) {
   }
 
   if (teamsEvent.type === 'message' && teamsEvent.text) {
+    // Check for message deduplication
+    const messageId = teamsEvent.id || `${teamsEvent.conversation?.id}_${Date.now()}`;
+    
+    // Try to insert message ID to prevent duplicates
+    const { error: duplicateError } = await supabase
+      .from('processed_messages')
+      .insert({
+        message_id: messageId,
+        channel_id: teamsEvent.conversation?.id || 'unknown',
+        platform: 'teams'
+      });
+    
+    if (duplicateError && duplicateError.code === '23505') { // Unique constraint violation
+      console.log(`Teams message ${messageId} already processed, skipping`);
+      return new Response('OK', { headers: corsHeaders });
+    }
+
     // Find active Teams agents
     const { data: agents, error: agentsError } = await supabase
       .from('agents')

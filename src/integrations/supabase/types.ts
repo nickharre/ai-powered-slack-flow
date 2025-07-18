@@ -98,12 +98,39 @@ export type Database = {
         }
         Relationships: []
       }
+      processed_messages: {
+        Row: {
+          channel_id: string
+          id: string
+          message_id: string
+          platform: string
+          processed_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          message_id: string
+          platform: string
+          processed_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          message_id?: string
+          platform?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_old_processed_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
